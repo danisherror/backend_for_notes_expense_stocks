@@ -196,7 +196,7 @@ class PurchaseRecordResponse(BaseModel):
         
 
 ################################################################
-#                   Stocks purchased                           #
+#                   Stocks sold                                #
 ################################################################
 
 
@@ -206,7 +206,7 @@ class SoldRecordCreate(BaseModel):
     price_per_unit_sold: float
     quantity: int
     created_at: datetime
-    last_updated: datetime
+    last_modified_at: datetime
     
 class SoldRecordResponse(BaseModel):
     id: str
@@ -215,7 +215,7 @@ class SoldRecordResponse(BaseModel):
     price_per_unit_sold: float
     quantity: int
     created_at: datetime
-    last_updated: datetime
+    last_modified_at: datetime
 
     class Config:
         orm_mode = True

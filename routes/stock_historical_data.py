@@ -25,7 +25,7 @@ async def get_all_stocks_data_of_user(symbol: str, token: str= Depends(get_curre
         buy_record=[]
     else:
         buy_record= [PurchaseRecordResponse(**purchase,id=str(purchase["_id"])) for purchase in buy_stock]
-    current_stock=current_stocks_collection.find({"owner":token,"symbol":symbol})
+    current_stock=current_stocks_collection.find_one({"owner":token,"symbol":symbol})
     if not current_stock:
         current_stock_record=[]
     else:

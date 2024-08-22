@@ -34,7 +34,7 @@ async def get_expenses(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No expenses found"
         )
-    return [ExpenseResponse(**expense, id=str(expenses["_id"])) for expense in expenses]
+    return [ExpenseResponse(**expense, id=str(expense["_id"])) for expense in expenses]
 
 
 @router.get("/expenses/{expenses_id}", response_model=ExpenseResponse)
@@ -98,6 +98,7 @@ async def update_expenses(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Expense is already done"
         )
     update_dict = update_data.dict(exclude_unset=True)
+    print(update_dict)
     update_dict["last_modified"] = datetime.utcnow()
     expense_collection.update_one({"_id": ObjectId(expenses_id)}, {"$set": update_dict})
     update_expenses = expense_collection.find_one({"_id": ObjectId(expenses_id)})

@@ -29,18 +29,15 @@ async def get_notes(token: str = Depends(get_current_user)):
     return [NoteResponse(**note, id=str(note["_id"])) for note in notes]
 
 
-@router.get("/notes/{note_id}")
+@router.get("/notes/{note_id}",response_model=NoteResponse)
 async def get_notes(note_id: str, token: str = Depends(get_current_user)):
-    print(note_id)
-    notes = notes_collection.find({"owner": token})
-    # Assuming `note_id` is a string representing the ID you're filtering by
-    abc = [note for note in notes if str(note["_id"]) == note_id]
-    if not abc:
+    notes = notes_collection.find_one(ObjectId(note_id))
+    if not notes:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No notes found"
         )
     else:
-        return NoteResponse(**abc[0], id=str(abc[0]["_id"]))
+        return NoteResponse(**notes, id=str(notes["_id"]))
 
 
 @router.put("/notes/{note_id}", response_model=NoteResponse)
@@ -50,18 +47,18 @@ async def update_notes(
     note.last_modified = datetime.utcnow()
     update_data = {k: v for k, v in note.dict().items() if v is not None}
     notes = notes_collection.find_one_and_update(
-        {"_id": note_id, "owner": token}, {"$set": update_data}, return_document=True
+        {"_id":ObjectId(note_id)}, {"$set": update_data}, return_document=True
     )
     if not notes:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No notes found"
         )
-    return NoteResponse(**notes, id=notes["_id"])
+    return NoteResponse(**notes, id=str(notes["_id"]))
 
 
 @router.delete("/notes/{note_id}",response_model=dict)
 async def delete_note(note_id: str, token: str = Depends(get_current_user)):
-    notes = notes_collection.find_one_and_delete({"owner": token, "_id": note_id})
+    notes = notes_collection.find_one_and_delete({"_id":ObjectId(note_id)})
     if not notes:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No notes found"

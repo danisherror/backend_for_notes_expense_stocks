@@ -78,10 +78,10 @@ class ExpenseCreate(ExpenseBase):
 class ExpenseUpdate(BaseModel):
     amount: float
     description: Optional[str] = None
-    tags: Optional[List[str]] = []
+    tags: Optional[List[str]] = None
     split_amount: Optional[List[str]] = None
-    amount_given: Optional[bool] = False
-    status_done: Optional[bool] = False
+    amount_given: Optional[bool] = None
+    status_done: Optional[bool] = None
 
     class Config:
         extra = "forbid"

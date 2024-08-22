@@ -30,13 +30,17 @@ async def get_notes(token: str = Depends(get_current_user)):
 
 
 @router.get("/notes/{note_id}")
-async def get_note(note_id: str, token: str = Depends(get_current_user)):
-    notes = notes_collection.find({"owner": token, "_id": note_id})
-    if not notes:
+async def get_notes(note_id: str, token: str = Depends(get_current_user)):
+    print(note_id)
+    notes = notes_collection.find({"owner": token})
+    # Assuming `note_id` is a string representing the ID you're filtering by
+    abc = [note for note in notes if str(note["_id"]) == note_id]
+    if not abc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No notes found"
         )
-    return [notes]
+    else:
+        return NoteResponse(**abc[0], id=str(abc[0]["_id"]))
 
 
 @router.put("/notes/{note_id}", response_model=NoteResponse)

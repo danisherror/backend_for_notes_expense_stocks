@@ -69,14 +69,14 @@ async def get_purchases(
     token: str = Depends(get_current_user),
     db: Collection = Depends(get_purchase_collection),
 ):
-    purchases = db.find_one({"owner": token})
+    purchases = db.find({"owner": token})
     if not purchases:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No purchases found"
         )
     return [
         PurchaseRecordResponse(**purchase, id=str(purchase["_id"]))
-        for purchase in purchases["purchases"]
+        for purchase in purchases
     ]
 
 
@@ -86,7 +86,7 @@ async def get_purchase(
     token: str = Depends(get_current_user),
     db: Collection = Depends(get_purchase_collection),
 ):
-    purchases = db.find_one({"owner": token, "_id": purchase_id})
+    purchases = db.find_one({"owner": token, "_id": ObjectId(purchase_id)})
     if not purchases:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No purchases found"
@@ -123,7 +123,7 @@ async def update_buy_record(
     else:
         average_price_per_unit = float(prev_price_per_unit / reverted_quantity)
     reverted_net_profit = prev_data["net_profit"] + (
-        existing_purchase["net_profit"] * existing_purchase["quantity"]
+        existing_purchase["price_per_unit"] * existing_purchase["quantity"]
     )
     updated_net_profit = reverted_net_profit - (
         updated_data.price_per_unit * updated_data.quantity
@@ -131,14 +131,16 @@ async def update_buy_record(
     remaining_quantity = reverted_quantity + updated_data.quantity
     average_price_per_unit = float(
         average_price_per_unit * reverted_quantity
-        + float(updated_data["price_per_unit"] * updated_data["quantity"])
+        + float(updated_data.price_per_unit * updated_data.quantity)
     )
-    total_quantity = reverted_quantity + updated_data["quantity"]
+    total_quantity = reverted_quantity + updated_data.quantity
     average_price_per_unit = float(average_price_per_unit / total_quantity)
     current_stock_collection.update_one(
         {"_id": ObjectId(prev_data["_id"])},
         {
             "$set": {
+                "symbol": updated_data.symbol,
+                "name": updated_data.name,
                 "quantity": remaining_quantity,
                 "net_profit": updated_net_profit,
                 "last_modified_at": datetime.now(),
@@ -188,7 +190,7 @@ async def delete_buy_record(
     else:
         average_price_per_unit = float(prev_price_per_unit / reverted_quantity)
     reverted_net_profit = prev_data["net_profit"] + (
-        existing_purchase["net_profit"] * existing_purchase["quantity"]
+        existing_purchase["price_per_unit"] * existing_purchase["quantity"]
     )
     current_stock_collection.update_one(
         {"_id": ObjectId(prev_data["_id"])},

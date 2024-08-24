@@ -36,7 +36,6 @@ router = APIRouter()
 async def get_all_stocks_data_of_user(
     symbol: str,
     token: str = Depends(get_current_user),
-    stock_data_collection: Collection = Depends(get_stock_data_collection),
     current_stocks_collection: Collection = Depends(get_current_stocks_collection),
     purchases_collection: Collection = Depends(get_purchase_collection),
     sold_collection: Collection = Depends(get_sold_collection),
@@ -65,48 +64,19 @@ async def get_all_stocks_data_of_user(
         current_stock_record = CurrentStockRecordResponse(
             **current_stock, id=str(current_stock["_id"])
         )
-    ################
-    # send historical data of that stock
-    symbol = symbol.upper()
-    symbol = symbol + ".NS"
-    if symbol not in valid_symbols:
-        historical_data = []
-        last_month_data = []
-        last_week_data = []
-        last_day_data = []
-    else:
-        data = fetch_historical_data_of_the_symbol(symbol)
-        historical_data = data["historical_data"]
-        last_month_data = data["last_month_data"]
-        last_week_data = data["last_week_data"]
-        last_day_data = data["last_day_data"]
-    ################
     return {
         "sold_records": sold_record,
         "buy_stock": buy_record,
         "current_stock": current_stock_record,
-        "historical_data": historical_data,
-        "last_day_data": last_day_data,
-        "last_week_data": last_week_data,
-        "last_month_data": last_month_data,
     }
-
-
-def fetch_historical_data_of_the_symbol(symbol: str):
-    data = yf.download(symbol, start="1950-01-01", end=None)
-    df = pd.DataFrame(data)
-    all_historical_data = [
-        {
-            "Date": date.strftime("%Y-%m-%d"),
-            "Open": round(float(row["Open"]), 3),
-            "High": round(float(row["High"]), 3),
-            "Low": round(float(row["Low"]), 3),
-            "Close": round(float(row["Close"]), 3),
-            "Adj Close": round(float(row["Adj Close"]), 3),
-            "Volume": int(row["Volume"]),
-        }
-        for date, row in df.iterrows()
-    ]
+@router.get("/fetch_historical_last_month_data/{symbol}", response_model=dict)
+async def fetch_historical_last_month_data(symbol:str):
+    symbol = symbol.upper()
+    symbol = symbol + ".NS"
+    if symbol not in valid_symbols:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol"
+        )
     end_date = datetime.now()
     start_date = end_date - timedelta(days=30)
     start_date_str = start_date.strftime("%Y-%m-%d")
@@ -117,15 +87,20 @@ def fetch_historical_data_of_the_symbol(symbol: str):
         {
             "Date": date.strftime("%Y-%m-%d"),
             "Time": date.strftime("%H:%M:%S"),
-            "Open": round(float(row["Open"]), 3),
-            "High": round(float(row["High"]), 3),
-            "Low": round(float(row["Low"]), 3),
             "Close": round(float(row["Close"]), 3),
-            "Adj Close": round(float(row["Adj Close"]), 3),
             "Volume": int(row["Volume"]),
         }
         for date, row in df.iterrows()
     ]
+    return {"last_month_data":last_month_data}
+@router.get("/fetch_historical_last_week_data/{symbol}", response_model=dict)
+async def fetch_historical_last_week_data(symbol:str):
+    symbol = symbol.upper()
+    symbol = symbol + ".NS"
+    if symbol not in valid_symbols:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol"
+        )
     end_date = datetime.now()
     start_date = end_date - timedelta(days=7)
     start_date_str = start_date.strftime("%Y-%m-%d")
@@ -136,44 +111,50 @@ def fetch_historical_data_of_the_symbol(symbol: str):
         {
             "Date": date.strftime("%Y-%m-%d"),
             "Time": date.strftime("%H:%M:%S"),
-            "Open": round(float(row["Open"]), 3),
-            "High": round(float(row["High"]), 3),
-            "Low": round(float(row["Low"]), 3),
             "Close": round(float(row["Close"]), 3),
-            "Adj Close": round(float(row["Adj Close"]), 3),
             "Volume": int(row["Volume"]),
         }
         for date, row in df.iterrows()
     ]
-    data = yf.download(symbol, period="1d", interval="5m")
-    df = pd.DataFrame(data)
-    last_day_data = [
-        {
-            "Date": date.strftime("%Y-%m-%d"),
-            "Time": date.strftime("%H:%M:%S"),
-            "Open": round(float(row["Open"]), 3),
-            "High": round(float(row["High"]), 3),
-            "Low": round(float(row["Low"]), 3),
-            "Close": round(float(row["Close"]), 3),
-            "Adj Close": round(float(row["Adj Close"]), 3),
-            "Volume": int(row["Volume"]),
-        }
-        for date, row in df.iterrows()
-    ]
-    return {
-        "historical_data": all_historical_data,
-        "last_month_data": last_month_data,
-        "last_week_data": last_week_data,
-        "last_day_data": last_day_data,
-    }
-
-
-@router.get("/update_and_get_historical_record_of_stock/{symbol}")
-async def update_and_get_historical_record_of_stock(symbol: str):
+    return {"last_week_data":last_week_data}
+@router.get("/fetch_historical_last_day_data/{symbol}", response_model=dict)
+async def fetch_historical_last_day_data(symbol:str):
     symbol = symbol.upper()
     symbol = symbol + ".NS"
     if symbol not in valid_symbols:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol"
         )
-    return fetch_historical_data_of_the_symbol(symbol)
+    data = yf.download(symbol, period="1d", interval="5m")
+    df = pd.DataFrame(data)
+    last_day_data = [
+        {
+            "Date": date.strftime("%Y-%m-%d"),
+            "Time": date.strftime("%H:%M:%S"),
+            "Close": round(float(row["Close"]), 3),
+            "Volume": int(row["Volume"]),
+        }
+        for date, row in df.iterrows()
+    ]
+    return {"last_dau_data":last_day_data}
+@router.get("/fetch_historical_data_of_the_symbol/{symbol}", response_model=dict)
+async def fetch_historical_data_of_the_symbol(symbol: str):
+    symbol = symbol.upper()
+    symbol = symbol + ".NS"
+    if symbol not in valid_symbols:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol"
+        )
+    data = yf.download(symbol, start="1950-01-01", end=None)
+    df = pd.DataFrame(data)
+    all_historical_data = [
+        {
+            "Date": date.strftime("%Y-%m-%d"),
+            "Close": round(float(row["Close"]), 3),
+            "Volume": int(row["Volume"]),
+        }
+        for date, row in df.iterrows()
+    ]
+    return {
+        "historical_data": all_historical_data,
+    }

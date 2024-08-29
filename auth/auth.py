@@ -1,11 +1,13 @@
 import bcrypt
 import jwt
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status , Depends
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 import jwt
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+security = HTTPBearer()
 # Load environment variables
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -32,6 +34,7 @@ def decode_jwt_token(token: str) -> dict:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-def get_current_user(token: str) -> str:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    token = credentials.credentials
     payload = decode_jwt_token(token)
     return payload.get("sub")

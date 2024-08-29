@@ -47,15 +47,7 @@ async def signin(form_data: User):
 
 @router.get("/profile", response_model=UserOut)
 async def get_profile(token: str = Depends(get_current_user)):
-    # payload = decode_jwt_token(token)
-    # print(get_current_user(token))
-    # if not payload:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-    #     )
-    # print(payload)
     user = user_collection.find_one({"email": token})
-    print(user)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"

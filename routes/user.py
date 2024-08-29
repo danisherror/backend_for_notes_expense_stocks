@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from database.database import user_collection
+from auth.auth import get_current_user
 from models.model import User, UserOut
 from pymongo.errors import DuplicateKeyError
 from auth.auth import (
@@ -11,8 +11,6 @@ from auth.auth import (
     get_current_user
 )
 
-
-oath2Scheme = OAuth2PasswordBearer(tokenUrl="/api/signin")
 router = APIRouter()
 
 
@@ -36,8 +34,8 @@ async def create_user(user: User):
 
 
 @router.post("/signin", response_model=dict)
-async def signin(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = user_collection.find_one({"email": form_data.username})
+async def signin(form_data: User):
+    user = user_collection.find_one({"email": form_data.email})
     if not user or not verify_password(form_data.password, user["password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -48,15 +46,15 @@ async def signin(form_data: OAuth2PasswordRequestForm = Depends()):
 
 
 @router.get("/profile", response_model=UserOut)
-async def get_profile(token: str = Depends(oath2Scheme)):
-    payload = decode_jwt_token(token)
-    print(get_current_user(token))
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
-    print(payload)
-    user = user_collection.find_one({"email": payload["sub"]})
+async def get_profile(token: str = Depends(get_current_user)):
+    # payload = decode_jwt_token(token)
+    # print(get_current_user(token))
+    # if not payload:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+    #     )
+    # print(payload)
+    user = user_collection.find_one({"email": token})
     print(user)
     if not user:
         raise HTTPException(

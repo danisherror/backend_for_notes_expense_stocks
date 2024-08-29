@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-
+from fastapi.middleware.cors import CORSMiddleware
 from routes.notes import router as notes_router
 from routes.expense import router as expense_router
 from routes.transaction import router as transaction_router
@@ -9,6 +9,13 @@ from routes.stock_historical_data import router as stock_historical_data
 from routes.buy_stocks import router as buy_stocks_router
 from routes.sold_stocks import router as sold_stocks_router
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Allow specific origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 app.include_router(user_router, prefix="/api",tags=["User Details"])
 app.include_router(notes_router, prefix="/api",tags=["Notes"])

@@ -20,11 +20,16 @@ from models.model import (
 from pymongo.collection import Collection
 import json
 import os
+# from pathlib import Path
+# current_dir = Path('./routes')
 
-file_path = r"E:\all together website\historical and live data fro stocks\backend_for_notes_expense_stocks\routes\symbols_results.xlsx"
-if not os.path.exists(file_path):
-    raise FileNotFoundError(f"The file {file_path} does not exist.")
-valid_symbols = pd.read_excel(file_path, sheet_name="Valid Symbols")[
+# # Iterate over files and directories in the current directory
+# for file in current_dir.iterdir():
+#     print(file.name)
+# file_path = r"E:\all together website\historical and live data fro stocks\backend_for_notes_expense_stocks\routes\symbols_results.xlsx"
+# if not os.path.exists(file_path):
+#     raise FileNotFoundError(f"The file {file_path} does not exist.")
+valid_symbols = pd.read_excel('./routes/symbols_results.xlsx', sheet_name="Valid Symbols")[
     "Valid Symbols"
 ].tolist()
 

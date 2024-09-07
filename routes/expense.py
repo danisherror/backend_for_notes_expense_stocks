@@ -93,7 +93,7 @@ async def update_expenses(
             status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
         )
 
-    if expense.get("status_done"):
+    if expense.get("status_done")==True:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Expense is already done"
         )

@@ -1,23 +1,23 @@
 # File structure
 backend_for_notes_expense_stocks
-  ├─ auth/
-  │  ├─ __pycache__/
+  ├─ auth
+  │  ├─ __pycache__
   │  │  └─ auth.cpython-312.pyc
   │  └─ auth.py
-  ├─ database/
-  │  ├─ __pycache__/
+  ├─ database
+  │  ├─ __pycache__
   │  │  └─ database.cpython-312.pyc
   │  └─ database.py
-  ├─ main/
-  │  ├─ __pycache__/
+  ├─ main
+  │  ├─ __pycache__
   │  │  └─ app.cpython-312.pyc
   │  └─ app.py
-  ├─ models/
-  │  ├─ __pycache__/
+  ├─ models
+  │  ├─ __pycache__
   │  │  └─ model.cpython-312.pyc
   │  └─ model.py
-  ├─ routes/
-  │  ├─ __pycache__/
+  ├─ routes
+  │  ├─ __pycache__
   │  │  ├─ buy_stocks.cpython-312.pyc
   │  │  ├─ expense.cpython-312.pyc
   │  │  ├─ notes.cpython-312.pyc

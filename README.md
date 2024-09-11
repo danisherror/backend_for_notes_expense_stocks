@@ -1,5 +1,5 @@
 # File structure
-
+```
 backend_for_notes_expense_stocks
 ├─ auth
 │  └─ auth.py
@@ -24,7 +24,7 @@ backend_for_notes_expense_stocks
 ├─ .gitignore
 ├─ README.md
 └─ requirements.txt
-
+```
 # Deployed site
 
 ```

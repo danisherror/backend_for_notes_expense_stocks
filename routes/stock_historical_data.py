@@ -163,3 +163,10 @@ async def fetch_historical_data_of_the_symbol(symbol: str):
     return {
         "historical_data": all_historical_data,
     }
+
+@router.get("/al_stocks_names",response_model=dict)
+async def get_all_stocks_names():
+    symbols=[]
+    for x in valid_symbols:
+        symbols.append(x.split('.')[0])
+    return {"symbols":symbols,}

@@ -90,8 +90,7 @@ async def fetch_historical_last_month_data(symbol:str):
     df = pd.DataFrame(data)
     last_month_data = [
         {
-            "Date": date.strftime("%Y-%m-%d"),
-            "Time": date.strftime("%H:%M:%S"),
+            "Date": date.strftime("%Y-%m-%d %I:%M %p"),
             "Close": round(float(row["Close"]), 3),
             "Volume": int(row["Volume"]),
         }
@@ -114,8 +113,7 @@ async def fetch_historical_last_week_data(symbol:str):
     df = pd.DataFrame(data)
     last_week_data = [
         {
-            "Date": date.strftime("%Y-%m-%d"),
-            "Time": date.strftime("%H:%M:%S"),
+            "Date": date.strftime("%Y-%m-%d %I:%M %p"),
             "Close": round(float(row["Close"]), 3),
             "Volume": int(row["Volume"]),
         }
@@ -134,8 +132,7 @@ async def fetch_historical_last_day_data(symbol:str):
     df = pd.DataFrame(data)
     last_day_data = [
         {
-            "Date": date.strftime("%Y-%m-%d"),
-            "Time": date.strftime("%H:%M:%S"),
+            "Date": date.strftime("%Y-%m-%d %I:%M %p"),
             "Close": round(float(row["Close"]), 3),
             "Volume": int(row["Volume"]),
         }

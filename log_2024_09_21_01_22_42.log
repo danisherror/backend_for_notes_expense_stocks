@@ -1,0 +1,15 @@
+2024-09-21 01:22:43 INFO     : Started server process [2800]
+2024-09-21 01:22:43 INFO     : Waiting for application startup.
+2024-09-21 01:22:43 INFO     : Application startup complete.
+2024-09-21 01:22:43 INFO     : Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2024-09-21 01:22:57 INFO     : Request GET http://127.0.0.1:8000/docs called with 200 status
+2024-09-21 01:22:57 INFO     : Request GET http://127.0.0.1:8000/openapi.json called with 200 status
+2024-09-21 01:28:23 ERROR    : Request POST http://127.0.0.1:8000/api/signin called with 401 status
+2024-09-21 01:28:46 INFO     : Request POST http://127.0.0.1:8000/api/signin called with 200 status
+2024-09-21 01:29:05 ERROR    : Request GET http://127.0.0.1:8000/api/profile called with 403 status
+2024-09-21 01:29:42 ERROR    : Request GET http://127.0.0.1:8000/api/all_stocks_data_of_users/reliance called with 403 status
+2024-09-21 01:29:46 ERROR    : Request GET http://127.0.0.1:8000/api/all_stocks_data_of_users/reliance called with 403 status
+2024-09-21 01:29:56 INFO     : Shutting down
+2024-09-21 01:29:56 INFO     : Waiting for application shutdown.
+2024-09-21 01:29:56 INFO     : Application shutdown complete.
+2024-09-21 01:29:56 INFO     : Finished server process [2800]

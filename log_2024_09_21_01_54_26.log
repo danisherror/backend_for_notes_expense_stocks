@@ -1,0 +1,10 @@
+2024-09-21 01:54:26 INFO     : Started server process [8472]
+2024-09-21 01:54:26 INFO     : Waiting for application startup.
+2024-09-21 01:54:26 INFO     : Application startup complete.
+2024-09-21 01:54:26 INFO     : Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2024-09-21 01:54:33 INFO     : 127.0.0.1:51762 - "GET /api/notes HTTP/1.1" 200
+2024-09-21 01:54:33 INFO     : 127.0.0.1:51762 - "GET /api/notes HTTP/1.1" 200
+2024-09-21 01:54:41 INFO     : Shutting down
+2024-09-21 01:54:41 INFO     : Waiting for application shutdown.
+2024-09-21 01:54:41 INFO     : Application shutdown complete.
+2024-09-21 01:54:41 INFO     : Finished server process [8472]

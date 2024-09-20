@@ -42,7 +42,7 @@ SECRET_KEY= <your key
 # run command
 
 ```
-uvicorn main.app:app --reload
+python main.py
 ```
 
 # Facing jwt error

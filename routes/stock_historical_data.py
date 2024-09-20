@@ -15,155 +15,95 @@ from models.model import (
     SoldRecordResponse,
     CurrentStockRecordResponse,
     PurchaseRecordResponse,
-    StockResponse,
 )
 from pymongo.collection import Collection
-import json
-import os
-# from pathlib import Path
-# current_dir = Path('./routes')
 
-# # Iterate over files and directories in the current directory
-# for file in current_dir.iterdir():
-#     print(file.name)
-# file_path = r"E:\all together website\historical and live data fro stocks\backend_for_notes_expense_stocks\routes\symbols_results.xlsx"
-# if not os.path.exists(file_path):
-#     raise FileNotFoundError(f"The file {file_path} does not exist.")
-valid_symbols = pd.read_excel('./routes/symbols_results.xlsx', sheet_name="Valid Symbols")[
-    "Valid Symbols"
-].tolist()
+class StockRouter:
+    def __init__(self):
+        self.router = APIRouter()
+        self.valid_symbols = pd.read_excel('./routes/symbols_results.xlsx', sheet_name="Valid Symbols")["Valid Symbols"].tolist()
+        self.setup_routes()
 
+    def setup_routes(self):
+        self.router.add_api_route("/all_stocks_data_of_users/{symbol}", self.get_all_stocks_data_of_user, methods=["GET"])
+        self.router.add_api_route("/fetch_historical_last_month_data/{symbol}", self.fetch_historical_last_month_data, methods=["GET"])
+        self.router.add_api_route("/fetch_historical_last_week_data/{symbol}", self.fetch_historical_last_week_data, methods=["GET"])
+        self.router.add_api_route("/fetch_historical_last_day_data/{symbol}", self.fetch_historical_last_day_data, methods=["GET"])
+        self.router.add_api_route("/fetch_historical_data_of_the_symbol/{symbol}", self.fetch_historical_data_of_the_symbol, methods=["GET"])
+        self.router.add_api_route("/all_stocks_names", self.get_all_stocks_names, methods=["GET"])
 
-router = APIRouter()
+    async def get_all_stocks_data_of_user(self, symbol: str, token: str = Depends(get_current_user), 
+                                           current_stocks_collection: Collection = Depends(get_current_stocks_collection),
+                                           purchases_collection: Collection = Depends(get_purchase_collection),
+                                           sold_collection: Collection = Depends(get_sold_collection)):
+        solds_stock = sold_collection.find({"owner": token, "symbol": symbol})
+        sold_record = [SoldRecordResponse(**sold, id=str(sold["_id"])) for sold in solds_stock] if solds_stock else []
 
+        buy_stock = purchases_collection.find({"owner": token, "symbol": symbol})
+        buy_record = [PurchaseRecordResponse(**purchase, id=str(purchase["_id"])) for purchase in buy_stock] if buy_stock else []
 
-@router.get("/all_stocks_data_of_users/{symbol}", response_model=dict)
-async def get_all_stocks_data_of_user(
-    symbol: str,
-    token: str = Depends(get_current_user),
-    current_stocks_collection: Collection = Depends(get_current_stocks_collection),
-    purchases_collection: Collection = Depends(get_purchase_collection),
-    sold_collection: Collection = Depends(get_sold_collection),
-):
-    solds_stock = sold_collection.find({"owner": token, "symbol": symbol})
-    if not solds_stock:
-        sold_record = []
-    else:
-        sold_record = [
-            SoldRecordResponse(**sold, id=str(sold["_id"])) for sold in solds_stock
+        current_stock = current_stocks_collection.find_one({"owner": token, "symbol": symbol})
+        current_stock_record = CurrentStockRecordResponse(**current_stock, id=str(current_stock["_id"])) if current_stock else []
+
+        return {
+            "sold_records": sold_record,
+            "buy_stock": buy_record,
+            "current_stock": current_stock_record,
+        }
+
+    async def fetch_historical_last_month_data(self, symbol: str):
+        return await self.fetch_historical_data(symbol, days=30)
+
+    async def fetch_historical_last_week_data(self, symbol: str):
+        return await self.fetch_historical_data(symbol, days=7)
+
+    async def fetch_historical_last_day_data(self, symbol: str):
+        return await self.fetch_historical_data(symbol, days=1)
+
+    async def fetch_historical_data(self, symbol: str, days: int):
+        symbol = symbol.upper() + ".NS"
+        if symbol not in self.valid_symbols:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol")
+
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        data = yf.download(symbol, start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"), interval="5m")
+        if data.empty:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No data found for the given symbol")
+
+        df = pd.DataFrame(data)
+        historical_data = [
+            {
+                "Date": date.strftime("%Y-%m-%d %I:%M %p"),
+                "Close": round(float(row["Close"]), 3),
+                "Volume": int(row["Volume"]),
+            }
+            for date, row in df.iterrows()
         ]
-    buy_stock = purchases_collection.find({"owner": token, "symbol": symbol})
-    if not buy_stock:
-        buy_record = []
-    else:
-        buy_record = [
-            PurchaseRecordResponse(**purchase, id=str(purchase["_id"]))
-            for purchase in buy_stock
-        ]
-    current_stock = current_stocks_collection.find_one(
-        {"owner": token, "symbol": symbol}
-    )
-    if not current_stock:
-        current_stock_record = []
-    else:
-        current_stock_record = CurrentStockRecordResponse(
-            **current_stock, id=str(current_stock["_id"])
-        )
-    return {
-        "sold_records": sold_record,
-        "buy_stock": buy_record,
-        "current_stock": current_stock_record,
-    }
-@router.get("/fetch_historical_last_month_data/{symbol}", response_model=dict)
-async def fetch_historical_last_month_data(symbol:str):
-    symbol = symbol.upper()
-    symbol = symbol + ".NS"
-    if symbol not in valid_symbols:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol"
-        )
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=30)
-    start_date_str = start_date.strftime("%Y-%m-%d")
-    end_date_str = end_date.strftime("%Y-%m-%d")
-    data = yf.download(symbol, start=start_date_str, end=end_date_str, interval="5m")
-    df = pd.DataFrame(data)
-    last_month_data = [
-        {
-            "Date": date.strftime("%Y-%m-%d %I:%M %p"),
-            "Close": round(float(row["Close"]), 3),
-            "Volume": int(row["Volume"]),
-        }
-        for date, row in df.iterrows()
-    ]
-    return {"last_month_data":last_month_data}
-@router.get("/fetch_historical_last_week_data/{symbol}", response_model=dict)
-async def fetch_historical_last_week_data(symbol:str):
-    symbol = symbol.upper()
-    symbol = symbol + ".NS"
-    if symbol not in valid_symbols:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol"
-        )
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=7)
-    start_date_str = start_date.strftime("%Y-%m-%d")
-    end_date_str = end_date.strftime("%Y-%m-%d")
-    data = yf.download(symbol, start=start_date_str, end=end_date_str, interval="5m")
-    df = pd.DataFrame(data)
-    last_week_data = [
-        {
-            "Date": date.strftime("%Y-%m-%d %I:%M %p"),
-            "Close": round(float(row["Close"]), 3),
-            "Volume": int(row["Volume"]),
-        }
-        for date, row in df.iterrows()
-    ]
-    return {"last_week_data":last_week_data}
-@router.get("/fetch_historical_last_day_data/{symbol}", response_model=dict)
-async def fetch_historical_last_day_data(symbol:str):
-    symbol = symbol.upper()
-    symbol = symbol + ".NS"
-    if symbol not in valid_symbols:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol"
-        )
-    data = yf.download(symbol, period="1d", interval="5m")
-    df = pd.DataFrame(data)
-    last_day_data = [
-        {
-            "Date": date.strftime("%Y-%m-%d %I:%M %p"),
-            "Close": round(float(row["Close"]), 3),
-            "Volume": int(row["Volume"]),
-        }
-        for date, row in df.iterrows()
-    ]
-    return {"last_dau_data":last_day_data}
-@router.get("/fetch_historical_data_of_the_symbol/{symbol}", response_model=dict)
-async def fetch_historical_data_of_the_symbol(symbol: str):
-    symbol = symbol.upper()
-    symbol = symbol + ".NS"
-    if symbol not in valid_symbols:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol"
-        )
-    data = yf.download(symbol, start="1950-01-01", end=None)
-    df = pd.DataFrame(data)
-    all_historical_data = [
-        {
-            "Date": date.strftime("%Y-%m-%d"),
-            "Close": round(float(row["Close"]), 3),
-            "Volume": int(row["Volume"]),
-        }
-        for date, row in df.iterrows()
-    ]
-    return {
-        "historical_data": all_historical_data,
-    }
+        return {"historical_data": historical_data}
 
-@router.get("/al_stocks_names",response_model=dict)
-async def get_all_stocks_names():
-    symbols=[]
-    for x in valid_symbols:
-        symbols.append(x.split('.')[0])
-    return {"symbols":symbols,}
+    async def fetch_historical_data_of_the_symbol(self, symbol: str):
+        symbol = symbol.upper() + ".NS"
+        if symbol not in self.valid_symbols:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol")
+
+        data = yf.download(symbol, start="1950-01-01", end=None)
+        df = pd.DataFrame(data)
+        all_historical_data = [
+            {
+                "Date": date.strftime("%Y-%m-%d"),
+                "Close": round(float(row["Close"]), 3),
+                "Volume": int(row["Volume"]),
+            }
+            for date, row in df.iterrows()
+        ]
+        return {"historical_data": all_historical_data}
+
+    async def get_all_stocks_names(self):
+        symbols = [x.split('.')[0] for x in self.valid_symbols]
+        return {"symbols": symbols}
+
+# Instantiate and register the StockRouter
+stock_router_instance = StockRouter()
+router = stock_router_instance.router

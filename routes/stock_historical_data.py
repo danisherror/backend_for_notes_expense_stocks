@@ -139,6 +139,25 @@ async def fetch_historical_last_day_data(symbol:str):
         for date, row in df.iterrows()
     ]
     return {"last_dau_data":last_day_data}
+@router.get("/fetch_current_price_of_stock/{symbol}", response_model=dict)
+async def fetch_current_price_of_stock(symbol:str):
+    symbol = symbol.upper()
+    symbol = symbol + ".NS"
+    if symbol not in valid_symbols:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid stock symbol"
+        )
+    data = yf.download(symbol, start="1950-01-01", end=None)
+    df = pd.DataFrame(data)
+    last_day_data = [
+        {
+            "Date": date.strftime("%Y-%m-%d"),
+            "Close": round(float(row["Close"]), 3),
+            "Volume": int(row["Volume"]),
+        }
+        for date, row in df.iterrows()
+    ]
+    return {"current_price":last_day_data[len(last_day_data)-1]}
 @router.get("/fetch_historical_data_of_the_symbol/{symbol}", response_model=dict)
 async def fetch_historical_data_of_the_symbol(symbol: str):
     symbol = symbol.upper()

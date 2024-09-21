@@ -143,13 +143,13 @@ async def update_buy_record(
                 "name": updated_data.name,
                 "quantity": remaining_quantity,
                 "net_profit": updated_net_profit,
-                "last_modified_at": datetime.now(),
+                "last_updated": datetime.now(),
                 "price_per_unit": average_price_per_unit,
             }
         },
     )
     updated_dict = updated_data.dict(exclude_unset=True)
-    updated_dict["last_modified_at"] = datetime.utcnow()
+    updated_dict["last_updated"] = datetime.utcnow()
     purchases_collection.update_one(
         {"_id": ObjectId(purchase_id)}, {"$set": updated_dict}
     )
